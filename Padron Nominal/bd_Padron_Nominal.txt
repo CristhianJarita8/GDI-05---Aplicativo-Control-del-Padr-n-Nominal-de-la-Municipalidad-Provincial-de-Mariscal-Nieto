@@ -1,0 +1,1144 @@
+-- ======================================================
+--  BASE DE DATOS NOMINAL_DB
+-- ======================================================
+DROP DATABASE IF EXISTS nominal_db;
+CREATE DATABASE nominal_db;
+USE nominal_db;
+
+
+-- ======================================================
+--  TABLA Padron_Nominal
+-- ======================================================
+CREATE TABLE Padron_Nominal (
+    Codigo_PadronNominal VARCHAR(8) PRIMARY KEY,
+    Numero_DNI VARCHAR(8) UNIQUE NOT NULL,
+    EstadoTramite_DNI VARCHAR(60),
+    FechaTramite_DNI DATE,
+    Tipo_Documento VARCHAR(60),
+    CodigoUnico_Identidad VARCHAR(8) NOT NULL,
+    Numero_CertificadoNacidoVivo VARCHAR(8) NOT NULL,
+    Direccion VARCHAR(100) NOT NULL,
+    Telefono VARCHAR(12) NOT NULL,
+    Historial_Clinico VARCHAR(60),
+    DNI_CE VARCHAR(8) NOT NULL,
+    INDEX idx_FechaTramite (FechaTramite_DNI)
+) ENGINE=InnoDB;
+
+
+-- ======================================================
+--  TABLA Infante
+-- ======================================================
+CREATE TABLE Infante (
+    DNI_CE VARCHAR(8) NOT NULL,
+    Codigo_PadronNominal VARCHAR(8) NOT NULL,
+    Nombre_Infante VARCHAR(60) NOT NULL,
+    Apellido_Paterno VARCHAR(60) NOT NULL,
+    Apellido_Materno VARCHAR(60) NOT NULL,
+    FechaNacimiento_Infante DATE,
+    Codigo_Sexo CHAR(1),
+    PRIMARY KEY (DNI_CE, Codigo_PadronNominal),
+    INDEX idx_FechaNacimiento (FechaNacimiento_Infante),
+    FOREIGN KEY (Codigo_PadronNominal) REFERENCES Padron_Nominal(Codigo_PadronNominal)
+) ENGINE=InnoDB;
+
+
+-- ======================================================
+--  TABLA Homologacion_Nominal
+-- ======================================================
+CREATE TABLE Homologacion_Nominal (
+    ID_HomologacionNominal VARCHAR(10) PRIMARY KEY,
+    FechaInicio DATE NOT NULL,
+    FechaFin DATE NOT NULL,
+    FechaReunion DATE NOT NULL,
+    Distrito VARCHAR(60),
+    Provincia VARCHAR(60),
+    Departamento VARCHAR(60),
+    Observacion VARCHAR(150),
+    NNAPS VARCHAR(2),
+    NNALM VARCHAR(2),
+    NNAGIM VARCHAR(2),
+    NNDHM VARCHAR(2),
+    NNACP VARCHAR(2),
+    Nombre_EESS VARCHAR(60),
+    INDEX idx_FechaReunion (FechaReunion)
+) ENGINE=InnoDB;
+
+
+-- ======================================================
+--  TABLA Ficha_Visita
+-- ======================================================
+CREATE TABLE Ficha_Visita (
+    ID_Visita INT AUTO_INCREMENT PRIMARY KEY,
+    DNI_CE VARCHAR(8) NOT NULL,
+    Codigo_PadronNominal VARCHAR(8) NOT NULL,
+    Fecha_Visita DATE NOT NULL,
+    Peso_Infante DECIMAL(4,2) NOT NULL,
+    Distrito VARCHAR(60),
+    Fecha_Nacimiento DATE NOT NULL,
+    LenguaMaterna VARCHAR(60),
+    ID_HomologacionNominal VARCHAR(10) NOT NULL,
+    INDEX idx_FechaVisita (Fecha_Visita),
+    FOREIGN KEY (ID_HomologacionNominal) REFERENCES Homologacion_Nominal(ID_HomologacionNominal),
+    FOREIGN KEY (DNI_CE, Codigo_PadronNominal) REFERENCES Infante(DNI_CE, Codigo_PadronNominal)
+) ENGINE=InnoDB;
+
+
+-- ======================================================
+--  TABLA Apoderado
+-- ======================================================
+CREATE TABLE Apoderado (
+    DNI_Apoderado VARCHAR(8) NOT NULL,
+    DNI_CE VARCHAR(8) NOT NULL,
+    Codigo_PadronNominal VARCHAR(8) NOT NULL,
+    Nombres_Apoderado VARCHAR(60),
+    Apellidos_Apoderado VARCHAR(60),
+    GradoInstruccion_Madre VARCHAR(15),
+    Telefono VARCHAR(12),
+    PRIMARY KEY (DNI_Apoderado, DNI_CE),
+    FOREIGN KEY (DNI_CE, Codigo_PadronNominal) REFERENCES Infante(DNI_CE, Codigo_PadronNominal)
+) ENGINE=InnoDB;
+
+
+-- ======================================================
+--  TABLA Representante_Salud
+-- ======================================================
+CREATE TABLE IF NOT EXISTS Representante_Salud (
+    DNI_RS VARCHAR(8),
+    ID_HomologacionNominal VARCHAR(10),
+    Nombre_RS VARCHAR(80),
+    PRIMARY KEY (DNI_RS, ID_HomologacionNominal),
+    FOREIGN KEY (ID_HomologacionNominal) REFERENCES Homologacion_Nominal(ID_HomologacionNominal)
+);
+
+-- ======================================================
+--  TABLA Representante_Municipal
+-- ======================================================
+CREATE TABLE Representante_Municipal (
+    DNI_RM VARCHAR(8),
+    ID_HomologacionNominal VARCHAR(10),
+    Nombre_RM VARCHAR(60),
+    PRIMARY KEY (DNI_RM, ID_HomologacionNominal),
+    FOREIGN KEY (ID_HomologacionNominal) REFERENCES Homologacion_Nominal(ID_HomologacionNominal)
+) ENGINE=InnoDB;
+
+-- ======================================================
+--  TABLA Seguimiento_Nominal
+-- ======================================================
+CREATE TABLE Seguimiento_Nominal (
+    ID_SeguimientoNominal VARCHAR(10) PRIMARY KEY,
+    EstablecimientoSalud VARCHAR(60),
+    Fecha DATE,
+    Observaciones VARCHAR(150),
+    ID_HomologacionNominal VARCHAR(10),
+    FOREIGN KEY (ID_HomologacionNominal) REFERENCES Homologacion_Nominal(ID_HomologacionNominal)
+) ENGINE=InnoDB;
+
+
+-- ======================================================
+--  TABLA Informacion_Infante
+-- ======================================================
+CREATE TABLE Informacion_Infante (
+    DNI_Infante VARCHAR(8),
+    ID_SeguimientoNominal VARCHAR(10),
+    Nombres_Infante VARCHAR(60),
+    Apellidos_Infante VARCHAR(60),
+    FechaNacimiento DATE,
+    CRED TINYINT,
+    Vacunas TINYINT,
+    Suplementacion TINYINT,
+    Dosaje_Hb TINYINT,
+    Anemia TINYINT,
+    Tratamiento_Anemia TINYINT,
+    PadronNominal_Actualizado TINYINT,
+    PRIMARY KEY (DNI_Infante, ID_SeguimientoNominal),
+    FOREIGN KEY (ID_SeguimientoNominal) REFERENCES Seguimiento_Nominal(ID_SeguimientoNominal)
+) ENGINE=InnoDB;
+
+
+
+-- ======================================================
+--  INSERSIONES
+-- ======================================================
+INSERT INTO Homologacion_Nominal VALUES 
+('HN001','2024-01-05','2024-01-15','2024-01-10','Moquegua','Mariscal Nieto','Moquegua','Reunión inicial','02','01','01','01','01','C.S. San Francisco'),
+('HN002','2024-02-01','2024-02-10','2024-02-07','Moquegua','Mariscal Nieto','Moquegua','Evaluación mensual','03','02','02','02','02','C.S. San Francisco'),
+('HN003','2024-03-01','2024-03-10','2024-03-07','Samegua','Mariscal Nieto','Moquegua','Seguimiento trimestral','01','01','01','01','01','C.S. Samegua'),
+('HN004','2024-04-01','2024-04-12','2024-04-08','Torata','Mariscal Nieto','Moquegua','Reunión técnica','01','01','01','01','01','P.S. Torata'),
+('HN005','2024-05-01','2024-05-10','2024-05-07','Moquegua','Mariscal Nieto','Moquegua','Evaluación general','02','02','02','02','02','C.S. San Francisco'),
+('HN006','2024-06-01','2024-06-10','2024-06-07','Samegua','Mariscal Nieto','Moquegua','Supervisión','01','01','01','01','01','C.S. Samegua'),
+('HN007','2024-07-01','2024-07-10','2024-07-07','Torata','Mariscal Nieto','Moquegua','Revisión de casos','01','01','01','01','01','P.S. Torata'),
+('HN008','2024-08-01','2024-08-10','2024-08-07','Moquegua','Mariscal Nieto','Moquegua','Capacitación','02','02','02','02','02','C.S. San Francisco'),
+('HN009','2024-09-01','2024-09-10','2024-09-07','Samegua','Mariscal Nieto','Moquegua','Supervisión','01','01','01','01','01','C.S. Samegua'),
+('HN010','2024-10-01','2024-10-10','2024-10-07','Torata','Mariscal Nieto','Moquegua','Evaluación técnica','01','01','01','01','01','P.S. Torata'),
+('HN011','2024-11-01','2024-11-10','2024-11-07','Moquegua','Mariscal Nieto','Moquegua','Revisión mensual','02','02','02','02','02','C.S. San Francisco'),
+('HN012','2024-12-01','2024-12-10','2024-12-07','Samegua','Mariscal Nieto','Moquegua','Reunión final','01','01','01','01','01','C.S. Samegua'),
+('HN013','2025-01-01','2025-01-10','2025-01-07','Moquegua','Mariscal Nieto','Moquegua','Evaluación anual','02','02','02','02','02','C.S. San Francisco'),
+('HN014','2025-02-01','2025-02-10','2025-02-07','Torata','Mariscal Nieto','Moquegua','Control técnico','01','01','01','01','01','P.S. Torata'),
+('HN015','2025-03-01','2025-03-10','2025-03-07','Moquegua','Mariscal Nieto','Moquegua','Supervisión','02','02','02','02','02','C.S. San Francisco');
+
+INSERT INTO Padron_Nominal VALUES
+('PN001','76543210','Completado','2024-01-06','DNI','76543210','76543210','Jr. Los Olivos 120','953456789','HC001','76543210'),
+('PN002','87654321','En trámite','2024-02-03','DNI','87654321','87654321','Av. Grau 450','986789123','HC002','87654321'),
+('PN003','99887766','Completado','2024-03-05','DNI','99887766','99887766','Calle Lima 789','956123789','HC003','99887766'),
+('PN004','88990077','Completado','2024-04-02','DNI','88990077','88990077','Av. Balta 900','976321456','HC004','88990077'),
+('PN005','77665544','En trámite','2024-05-12','DNI','77665544','77665544','Calle Arequipa 333','987456123','HC005','77665544'),
+('PN006','66554433','Completado','2024-06-15','DNI','66554433','66554433','Av. La Paz 111','912345678','HC006','66554433'),
+('PN007','55443322','Completado','2024-07-05','DNI','55443322','55443322','Av. Ilo 600','956789321','HC007','55443322'),
+('PN008','44332211','Completado','2024-08-07','DNI','44332211','44332211','Calle Ayacucho 120','912678543','HC008','44332211'),
+('PN009','33441122','En trámite','2024-09-04','DNI','33441122','33441122','Av. Simón Bolívar 600','985321654','HC009','33441122'),
+('PN010','22334455','Completado','2024-10-05','DNI','22334455','22334455','Jr. Lima 110','999888777','HC010','22334455'),
+('PN011','11335577','Completado','2024-11-08','DNI','11335577','11335577','Calle Ilo 450','955333222','HC011','11335577'),
+('PN012','99112233','Completado','2024-12-01','DNI','99112233','99112233','Av. 25 de Noviembre 100','954111222','HC012','99112233'),
+('PN013','88221144','Completado','2025-01-05','DNI','88221144','88221144','Av. Mariscal Nieto 800','933444555','HC013','88221144'),
+('PN014','77339955','En trámite','2025-02-01','DNI','77339955','77339955','Calle Los Pinos 250','922333111','HC014','77339955'),
+('PN015','66228844','Completado','2025-03-10','DNI','66228844','66228844','Jr. Moquegua 500','911222333','HC015','66228844');
+
+INSERT INTO Infante VALUES
+('76543210','PN001','Sofia','Ramos','Pérez','2024-03-10','2'),
+('87654321','PN002','Mateo','López','Quispe','2024-04-25','1'),
+('99887766','PN003','Camila','Torres','Aguilar','2024-05-30','2'),
+('88990077','PN004','Diego','Chávez','Flores','2024-06-15','1'),
+('77665544','PN005','Valentina','Gómez','Mamani','2024-07-20','2'),
+('66554433','PN006','Thiago','Vargas','Condori','2024-08-05','1'),
+('55443322','PN007','Luciana','Fernández','Coayla','2024-08-28','2'),
+('44332211','PN008','Gael','Huarachi','Pinto','2024-09-10','1'),
+('33441122','PN009','Isabella','Choque','Patiño','2024-09-27','2'),
+('22334455','PN010','Emilio','Huanca','Ramos','2024-10-03','1'),
+('11335577','PN011','Antonella','Nina','Soto','2024-10-25','2'),
+('99112233','PN012','Sebastián','Yucra','Apaza','2024-11-12','1'),
+('88221144','PN013','Valeria','Ccama','Condori','2024-12-01','2'),
+('77339955','PN014','Andrés','Pari','Ticona','2025-01-10','1'),
+('66228844','PN015','Mía','Sucso','Flores','2025-02-05','2');
+
+INSERT INTO Ficha_Visita
+(DNI_CE, Codigo_PadronNominal, Fecha_Visita, Peso_Infante, Distrito, Fecha_Nacimiento, LenguaMaterna, ID_HomologacionNominal)
+VALUES
+('76543210', 'PN001', '2025-03-10', 6.85, 'Moquegua', '2024-03-10', 'Castellano', 'HN001'),
+('87654321', 'PN002', '2025-03-12', 7.26, 'Samegua', '2024-04-25', 'Quechua', 'HN002'),
+('99887766', 'PN003', '2025-03-15', 6.58, 'San Antonio', '2024-05-30', 'Castellano', 'HN003'),
+('88990077', 'PN004', '2025-03-18', 8.04, 'Moquegua', '2024-06-15', 'Castellano', 'HN004'),
+('77665544', 'PN005', '2025-03-20', 7.12, 'Torata', '2024-07-20', 'Quechua', 'HN005'),
+('66554433', 'PN006', '2025-03-22', 6.99, 'Samegua', '2024-08-05', 'Castellano', 'HN006'),
+('55443322', 'PN007', '2025-03-24', 7.32, 'Moquegua', '2024-08-28', 'Aymara', 'HN007'),
+('44332211', 'PN008', '2025-03-26', 7.46, 'Carumas', '2024-09-10', 'Castellano', 'HN008'),
+('33441122', 'PN009', '2025-03-28', 6.61, 'San Antonio', '2024-09-27', 'Quechua', 'HN009'),
+('22334455', 'PN010', '2025-03-29', 7.05, 'Torata', '2024-10-03', 'Castellano', 'HN010'),
+('11335577', 'PN011', '2025-04-01', 7.58, 'Moquegua', '2024-10-25', 'Castellano', 'HN011'),
+('99112233', 'PN012', '2025-04-03', 7.16, 'Samegua', '2024-11-12', 'Quechua', 'HN012'),
+('88221144', 'PN013', '2025-04-05', 6.97, 'Moquegua', '2024-12-01', 'Aymara', 'HN013'),
+('77339955', 'PN014', '2025-04-07', 7.64, 'Torata', '2025-01-10', 'Castellano', 'HN014'),
+('66228844', 'PN015', '2025-04-09', 6.82, 'Carumas', '2025-02-05', 'Castellano', 'HN015');
+
+
+
+INSERT INTO Apoderado VALUES
+('76543211','76543210','PN001','María Ramos','Pérez','Secundaria','953221456'),
+('87654322','87654321','PN002','José López','Quispe','Primaria','946112578'),
+('99887767','99887766','PN003','Elena Torres','Aguilar','Superior','940335721'),
+('88990078','88990077','PN004','Luis Chávez','Flores','Secundaria','987214365'),
+('77665545','77665544','PN005','Rosa Gómez','Mamani','Primaria','954120365'),
+('66554434','66554433','PN006','Carla Vargas','Condori','Superior','968442315'),
+('55443323','55443322','PN007','Carmen Fernández','Coayla','Secundaria','961325874'),
+('44332212','44332211','PN008','Daniel Huarachi','Pinto','Primaria','979654123'),
+('33441123','33441122','PN009','Patricia Choque','Patiño','Secundaria','958744123'),
+('22334456','22334455','PN010','Julio Huanca','Ramos','Primaria','982563214'),
+('11335578','11335577','PN011','Lucía Nina','Soto','Superior','951478236'),
+('99112234','99112233','PN012','Víctor Yucra','Apaza','Secundaria','987441256'),
+('88221145','88221144','PN013','Sofía Ccama','Condori','Secundaria','944125869'),
+('77339956','77339955','PN014','Andrea Pari','Ticona','Primaria','956987321'),
+('66228845','66228844','PN015','Carlos Sucso','Flores','Superior','947856231');
+
+INSERT INTO Representante_Salud VALUES
+('76543201','HN001','Paola Ruiz'),
+('87654302','HN002','Jorge Patiño'),
+('99887703','HN003','Diana Choque'),
+('88990004','HN004','Luis Ramos'),
+('77665505','HN005','Teresa Aguilar'),
+('66554406','HN006','Rosa Quispe'),
+('55443307','HN007','Marco Soto'),
+('44332208','HN008','Julia Paredes'),
+('33441109','HN009','Sonia Flores'),
+('22334410','HN010','Ana Mamani'),
+('11335511','HN011','Daniel Condori'),
+('99112212','HN012','Carmen Nina'),
+('88221113','HN013','Julio Coayla'),
+('77339914','HN014','Andrea Ramos'),
+('66228815','HN015','Patricia Yucra');
+
+INSERT INTO Representante_Municipal VALUES
+('76543221','HN001','Juan Pérez'),
+('87654322','HN002','María López'),
+('99887723','HN003','Carlos Aguilar'),
+('88990024','HN004','Rosa Quispe'),
+('77665525','HN005','Pedro Mamani'),
+('66554426','HN006','Elena Ramos'),
+('55443327','HN007','Julio Flores'),
+('44332228','HN008','Ana Coayla'),
+('33441129','HN009','Hugo Ticona'),
+('22334430','HN010','Patricia Soto'),
+('11335531','HN011','César Condori'),
+('99112232','HN012','Silvia Ramos'),
+('88221133','HN013','Daniel Yucra'),
+('77339934','HN014','Teresa Nina'),
+('66228835','HN015','Ricardo Huanca');
+
+INSERT INTO Seguimiento_Nominal VALUES 
+('SN001','Centro de Salud Moquegua','2025-01-05','Sin incidencias','HN001'),
+('SN002','Puesto de Salud Samegua','2025-01-07','Vacunación completa','HN002'),
+('SN003','Centro de Salud San Antonio','2025-01-09','CRED pendiente','HN003'),
+('SN004','Centro de Salud Torata','2025-01-12','Todo conforme','HN004'),
+('SN005','Puesto de Salud Carumas','2025-01-15','Control leve anemia','HN005'),
+('SN006','Centro de Salud Moquegua','2025-01-18','Sin incidencias','HN006'),
+('SN007','Puesto de Salud Samegua','2025-01-21','Control de peso','HN007'),
+('SN008','Centro de Salud San Antonio','2025-01-23','Sin incidencias','HN008'),
+('SN009','Centro de Salud Torata','2025-01-25','CRED completo','HN009'),
+('SN010','Puesto de Salud Carumas','2025-01-27','Observación nutricional','HN010'),
+('SN011','Centro de Salud Moquegua','2025-01-30','Sin incidencias','HN011'),
+('SN012','Centro de Salud Samegua','2025-02-02','Control de vacunas','HN012'),
+('SN013','Centro de Salud San Antonio','2025-02-04','Tratamiento anemia','HN013'),
+('SN014','Centro de Salud Torata','2025-02-06','Seguimiento normal','HN014'),
+('SN015','Centro de Salud Carumas','2025-02-08','Todo conforme','HN015');
+
+INSERT INTO Informacion_Infante VALUES 
+('76543210','SN001','Sofia','Ramos Pérez','2024-03-10',1,1,1,0,0,0,1),
+('87654321','SN002','Mateo','López Quispe','2024-04-25',1,1,1,0,0,0,1),
+('99887766','SN003','Camila','Torres Aguilar','2024-05-30',1,1,1,0,0,0,1),
+('88990077','SN004','Diego','Chávez Flores','2024-06-15',1,1,1,1,1,1,1),
+('77665544','SN005','Valentina','Gómez Mamani','2024-07-20',1,1,1,1,1,0,1),
+('66554433','SN006','Thiago','Vargas Condori','2024-08-05',1,1,1,0,0,0,1),
+('55443322','SN007','Luciana','Fernández Coayla','2024-08-28',1,1,1,0,0,0,1),
+('44332211','SN008','Gael','Huarachi Pinto','2024-09-10',1,1,1,0,0,0,1),
+('33441122','SN009','Isabella','Choque Patiño','2024-09-27',1,1,1,1,1,1,1),
+('22334455','SN010','Emilio','Huanca Ramos','2024-10-03',1,1,1,0,0,0,1),
+('11335577','SN011','Antonella','Nina Soto','2024-10-25',1,1,1,0,0,0,1),
+('99112233','SN012','Sebastián','Yucra Apaza','2024-11-12',1,1,1,0,0,0,1),
+('88221144','SN013','Valeria','Ccama Condori','2024-12-01',1,1,1,1,1,1,1),
+('77339955','SN014','Andrés','Pari Ticona','2025-01-10',1,1,1,0,0,0,1),
+('66228844','SN015','Mía','Sucso Flores','2025-02-05',1,1,1,0,0,0,1);
+
+
+
+-- ======================================================
+--  PROCEDIMIENTOS ALMACENADOS
+-- ======================================================
+DELIMITER $$
+-- Insertar en Padron_Nominal
+CREATE PROCEDURE sp_insert_Padron_Nominal(
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Numero_DNI VARCHAR(8),
+    IN p_EstadoTramite_DNI VARCHAR(60),
+    IN p_FechaTramite_DNI DATE,
+    IN p_Tipo_Documento VARCHAR(60),
+    IN p_CodigoUnico_Identidad VARCHAR(8),
+    IN p_Numero_CertificadoNacidoVivo VARCHAR(8),
+    IN p_Direccion VARCHAR(100),
+    IN p_Telefono VARCHAR(12),
+    IN p_Historial_Clinico VARCHAR(60),
+    IN p_DNI_CE VARCHAR(8)
+)
+BEGIN
+    INSERT INTO Padron_Nominal VALUES (
+        p_Codigo_PadronNominal, p_Numero_DNI, p_EstadoTramite_DNI,
+        p_FechaTramite_DNI, p_Tipo_Documento, p_CodigoUnico_Identidad,
+        p_Numero_CertificadoNacidoVivo, p_Direccion, p_Telefono,
+        p_Historial_Clinico, p_DNI_CE
+    );
+END$$
+
+-- Actualizar Padron_Nominal
+CREATE PROCEDURE sp_update_Padron_Nominal(
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Numero_DNI VARCHAR(8),
+    IN p_EstadoTramite_DNI VARCHAR(60),
+    IN p_FechaTramite_DNI DATE,
+    IN p_Tipo_Documento VARCHAR(60),
+    IN p_CodigoUnico_Identidad VARCHAR(8),
+    IN p_Numero_CertificadoNacidoVivo VARCHAR(8),
+    IN p_Direccion VARCHAR(100),
+    IN p_Telefono VARCHAR(12),
+    IN p_Historial_Clinico VARCHAR(60),
+    IN p_DNI_CE VARCHAR(8)
+)
+BEGIN
+    UPDATE Padron_Nominal SET 
+        Numero_DNI = p_Numero_DNI,
+        EstadoTramite_DNI = p_EstadoTramite_DNI,
+        FechaTramite_DNI = p_FechaTramite_DNI,
+        Tipo_Documento = p_Tipo_Documento,
+        CodigoUnico_Identidad = p_CodigoUnico_Identidad,
+        Numero_CertificadoNacidoVivo = p_Numero_CertificadoNacidoVivo,
+        Direccion = p_Direccion,
+        Telefono = p_Telefono,
+        Historial_Clinico = p_Historial_Clinico,
+        DNI_CE = p_DNI_CE
+    WHERE Codigo_PadronNominal = p_Codigo_PadronNominal;
+END$$
+
+-- Eliminar de Padron_Nominal
+CREATE PROCEDURE sp_delete_Padron_Nominal(
+    IN p_Codigo_PadronNominal VARCHAR(8)
+)
+BEGIN
+    DELETE FROM Padron_Nominal WHERE Codigo_PadronNominal = p_Codigo_PadronNominal;
+END$$
+
+
+-- ============================================
+-- INFANTE
+-- ============================================
+-- Insertar Infante
+CREATE PROCEDURE sp_insert_Infante(
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Nombre_Infante VARCHAR(60),
+    IN p_Apellido_Paterno VARCHAR(60),
+    IN p_Apellido_Materno VARCHAR(60),
+    IN p_FechaNacimiento_Infante DATE,
+    IN p_Codigo_Sexo CHAR(1)
+)
+BEGIN
+    INSERT INTO Infante VALUES (
+        p_DNI_CE, p_Codigo_PadronNominal, p_Nombre_Infante,
+        p_Apellido_Paterno, p_Apellido_Materno,
+        p_FechaNacimiento_Infante, p_Codigo_Sexo
+    );
+END$$
+
+-- Actualizar Infante
+CREATE PROCEDURE sp_update_Infante(
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Nombre_Infante VARCHAR(60),
+    IN p_Apellido_Paterno VARCHAR(60),
+    IN p_Apellido_Materno VARCHAR(60),
+    IN p_FechaNacimiento_Infante DATE,
+    IN p_Codigo_Sexo CHAR(1)
+)
+BEGIN
+    UPDATE Infante SET
+        Nombre_Infante = p_Nombre_Infante,
+        Apellido_Paterno = p_Apellido_Paterno,
+        Apellido_Materno = p_Apellido_Materno,
+        FechaNacimiento_Infante = p_FechaNacimiento_Infante,
+        Codigo_Sexo = p_Codigo_Sexo
+    WHERE DNI_CE = p_DNI_CE AND Codigo_PadronNominal = p_Codigo_PadronNominal;
+END$$
+
+-- Eliminar Infante
+CREATE PROCEDURE sp_delete_Infante(
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8)
+)
+BEGIN
+    DELETE FROM Infante 
+    WHERE DNI_CE = p_DNI_CE AND Codigo_PadronNominal = p_Codigo_PadronNominal;
+END$$
+
+
+-- ============================================
+-- HOMOLOGACION_NOMINAL
+-- ============================================
+-- Insertar Homologacion_Nominal
+CREATE PROCEDURE sp_insert_Homologacion_Nominal(
+    IN p_ID_HomologacionNominal VARCHAR(10),
+    IN p_FechaInicio DATE,
+    IN p_FechaFin DATE,
+    IN p_FechaReunion DATE,
+    IN p_Distrito VARCHAR(60),
+    IN p_Provincia VARCHAR(60),
+    IN p_Departamento VARCHAR(60),
+    IN p_Observacion VARCHAR(150),
+    IN p_NNAPS VARCHAR(2),
+    IN p_NNALM VARCHAR(2),
+    IN p_NNAGIM VARCHAR(2),
+    IN p_NNDHM VARCHAR(2),
+    IN p_NNACP VARCHAR(2),
+    IN p_Nombre_EESS VARCHAR(60)
+)
+BEGIN
+    INSERT INTO Homologacion_Nominal VALUES (
+        p_ID_HomologacionNominal, p_FechaInicio, p_FechaFin, p_FechaReunion,
+        p_Distrito, p_Provincia, p_Departamento, p_Observacion,
+        p_NNAPS, p_NNALM, p_NNAGIM, p_NNDHM, p_NNACP, p_Nombre_EESS
+    );
+END$$
+
+-- Actualizar Homologacion_Nominal
+CREATE PROCEDURE sp_update_Homologacion_Nominal(
+    IN p_ID_HomologacionNominal VARCHAR(10),
+    IN p_FechaInicio DATE,
+    IN p_FechaFin DATE,
+    IN p_FechaReunion DATE,
+    IN p_Distrito VARCHAR(60),
+    IN p_Provincia VARCHAR(60),
+    IN p_Departamento VARCHAR(60),
+    IN p_Observacion VARCHAR(150),
+    IN p_NNAPS VARCHAR(2),
+    IN p_NNALM VARCHAR(2),
+    IN p_NNAGIM VARCHAR(2),
+    IN p_NNDHM VARCHAR(2),
+    IN p_NNACP VARCHAR(2),
+    IN p_Nombre_EESS VARCHAR(60)
+)
+BEGIN
+    UPDATE Homologacion_Nominal SET
+        FechaInicio = p_FechaInicio,
+        FechaFin = p_FechaFin,
+        FechaReunion = p_FechaReunion,
+        Distrito = p_Distrito,
+        Provincia = p_Provincia,
+        Departamento = p_Departamento,
+        Observacion = p_Observacion,
+        NNAPS = p_NNAPS,
+        NNALM = p_NNALM,
+        NNAGIM = p_NNAGIM,
+        NNDHM = p_NNDHM,
+        NNACP = p_NNACP,
+        Nombre_EESS = p_Nombre_EESS
+    WHERE ID_HomologacionNominal = p_ID_HomologacionNominal;
+END$$
+
+-- Eliminar Homologacion_Nominal
+CREATE PROCEDURE sp_delete_Homologacion_Nominal(
+    IN p_ID_HomologacionNominal VARCHAR(10)
+)
+BEGIN
+    DELETE FROM Homologacion_Nominal 
+    WHERE ID_HomologacionNominal = p_ID_HomologacionNominal;
+END$$
+
+
+-- ============================================
+-- FICHA_VISITA
+-- ============================================
+DROP PROCEDURE sp_insert_Ficha_Visita;
+
+-- Insertar Ficha_Visita
+CREATE PROCEDURE sp_insert_Ficha_Visita(
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Fecha_Visita DATE,
+    IN p_Peso_Infante DECIMAL(4,2),
+    IN p_Distrito VARCHAR(60),
+    IN p_Fecha_Nacimiento DATE,
+    IN p_LenguaMaterna VARCHAR(60),
+    IN p_ID_HomologacionNominal VARCHAR(10)
+)
+BEGIN
+    INSERT INTO Ficha_Visita (
+        DNI_CE, Codigo_PadronNominal, Fecha_Visita, Peso_Infante,
+        Distrito, Fecha_Nacimiento, LenguaMaterna, ID_HomologacionNominal
+    ) VALUES (
+        p_DNI_CE, p_Codigo_PadronNominal, p_Fecha_Visita, p_Peso_Infante,
+        p_Distrito, p_Fecha_Nacimiento, p_LenguaMaterna, p_ID_HomologacionNominal
+    );
+END;
+
+
+CREATE PROCEDURE sp_update_Ficha_Visita(
+    IN p_ID_Visita INT,
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Fecha_Visita DATE,
+    IN p_Peso_Infante DECIMAL(4,2),
+    IN p_Distrito VARCHAR(60),
+    IN p_Fecha_Nacimiento DATE,
+    IN p_LenguaMaterna VARCHAR(60),
+    IN p_ID_HomologacionNominal VARCHAR(10)
+)
+BEGIN
+    UPDATE Ficha_Visita SET
+        DNI_CE = p_DNI_CE,
+        Codigo_PadronNominal = p_Codigo_PadronNominal,
+        Fecha_Visita = p_Fecha_Visita,
+        Peso_Infante = p_Peso_Infante,
+        Distrito = p_Distrito,
+        Fecha_Nacimiento = p_Fecha_Nacimiento,
+        LenguaMaterna = p_LenguaMaterna,
+        ID_HomologacionNominal = p_ID_HomologacionNominal
+    WHERE ID_Visita = p_ID_Visita;
+END;
+
+
+CREATE PROCEDURE sp_delete_Ficha_Visita(IN p_ID_Visita INT)
+BEGIN
+    DELETE FROM Ficha_Visita WHERE ID_Visita = p_ID_Visita;
+END$$
+
+
+-- ============================================
+-- APODERADO
+-- ============================================
+CREATE PROCEDURE sp_insert_Apoderado(
+    IN p_DNI_Apoderado VARCHAR(8),
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Nombres_Apoderado VARCHAR(60),
+    IN p_Apellidos_Apoderado VARCHAR(60),
+    IN p_GradoInstruccion_Madre VARCHAR(15),
+    IN p_Telefono VARCHAR(12)
+)
+BEGIN
+    INSERT INTO Apoderado VALUES (
+        p_DNI_Apoderado, p_DNI_CE, p_Codigo_PadronNominal,
+        p_Nombres_Apoderado, p_Apellidos_Apoderado, p_GradoInstruccion_Madre, p_Telefono
+    );
+END$$
+
+CREATE PROCEDURE sp_update_Apoderado(
+    IN p_DNI_Apoderado VARCHAR(8),
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8),
+    IN p_Nombres_Apoderado VARCHAR(60),
+    IN p_Apellidos_Apoderado VARCHAR(60),
+    IN p_GradoInstruccion_Madre VARCHAR(15),
+    IN p_Telefono VARCHAR(12)
+)
+BEGIN
+    UPDATE Apoderado SET
+        Nombres_Apoderado = p_Nombres_Apoderado,
+        Apellidos_Apoderado = p_Apellidos_Apoderado,
+        GradoInstruccion_Madre = p_GradoInstruccion_Madre,
+        Telefono = p_Telefono
+    WHERE DNI_Apoderado = p_DNI_Apoderado AND DNI_CE = p_DNI_CE;
+END$$
+
+CREATE PROCEDURE sp_delete_Apoderado(IN p_DNI_Apoderado VARCHAR(8), IN p_DNI_CE VARCHAR(8))
+BEGIN
+    DELETE FROM Apoderado WHERE DNI_Apoderado = p_DNI_Apoderado AND DNI_CE = p_DNI_CE;
+END$$
+
+
+-- ============================================
+-- REPRESENTANTE_SALUD
+-- ============================================
+CREATE PROCEDURE sp_insert_Representante_Salud(
+    IN p_DNI_RS VARCHAR(8),
+    IN p_ID_HomologacionNominal VARCHAR(10),
+    IN p_Nombre_RS VARCHAR(80)
+)
+BEGIN
+    INSERT INTO Representante_Salud VALUES (p_DNI_RS, p_ID_HomologacionNominal, p_Nombre_RS);
+END$$
+
+CREATE PROCEDURE sp_update_Representante_Salud(
+    IN p_DNI_RS VARCHAR(8),
+    IN p_ID_HomologacionNominal VARCHAR(10),
+    IN p_Nombre_RS VARCHAR(80)
+)
+BEGIN
+    UPDATE Representante_Salud SET
+        Nombre_RS = p_Nombre_RS
+    WHERE DNI_RS = p_DNI_RS AND ID_HomologacionNominal = p_ID_HomologacionNominal;
+END$$
+
+CREATE PROCEDURE sp_delete_Representante_Salud(IN p_DNI_RS VARCHAR(8), IN p_ID_HomologacionNominal VARCHAR(10))
+BEGIN
+    DELETE FROM Representante_Salud WHERE DNI_RS = p_DNI_RS AND ID_HomologacionNominal = p_ID_HomologacionNominal;
+END$$
+
+
+-- ============================================
+-- REPRESENTANTE_MUNICIPAL
+-- ============================================
+CREATE PROCEDURE sp_insert_Representante_Municipal(
+    IN p_DNI_RM VARCHAR(8),
+    IN p_ID_HomologacionNominal VARCHAR(10),
+    IN p_Nombre_RM VARCHAR(60)
+)
+BEGIN
+    INSERT INTO Representante_Municipal VALUES (p_DNI_RM, p_ID_HomologacionNominal, p_Nombre_RM);
+END$$
+
+CREATE PROCEDURE sp_update_Representante_Municipal(
+    IN p_DNI_RM VARCHAR(8),
+    IN p_ID_HomologacionNominal VARCHAR(10),
+    IN p_Nombre_RM VARCHAR(60)
+)
+BEGIN
+    UPDATE Representante_Municipal SET Nombre_RM = p_Nombre_RM
+    WHERE DNI_RM = p_DNI_RM AND ID_HomologacionNominal = p_ID_HomologacionNominal;
+END$$
+
+CREATE PROCEDURE sp_delete_Representante_Municipal(IN p_DNI_RM VARCHAR(8), IN p_ID_HomologacionNominal VARCHAR(10))
+BEGIN
+    DELETE FROM Representante_Municipal WHERE DNI_RM = p_DNI_RM AND ID_HomologacionNominal = p_ID_HomologacionNominal;
+END$$
+
+
+-- ============================================
+-- SEGUIMIENTO_NOMINAL
+-- ============================================
+CREATE PROCEDURE sp_insert_Seguimiento_Nominal(
+    IN p_ID_SeguimientoNominal VARCHAR(10),
+    IN p_EstablecimientoSalud VARCHAR(60),
+    IN p_Fecha DATE,
+    IN p_Observaciones VARCHAR(150),
+    IN p_ID_HomologacionNominal VARCHAR(10)
+)
+BEGIN
+    INSERT INTO Seguimiento_Nominal VALUES (
+        p_ID_SeguimientoNominal, p_EstablecimientoSalud, p_Fecha, p_Observaciones, p_ID_HomologacionNominal
+    );
+END$$
+
+CREATE PROCEDURE sp_update_Seguimiento_Nominal(
+    IN p_ID_SeguimientoNominal VARCHAR(10),
+    IN p_EstablecimientoSalud VARCHAR(60),
+    IN p_Fecha DATE,
+    IN p_Observaciones VARCHAR(150),
+    IN p_ID_HomologacionNominal VARCHAR(10)
+)
+BEGIN
+    UPDATE Seguimiento_Nominal SET
+        EstablecimientoSalud = p_EstablecimientoSalud,
+        Fecha = p_Fecha,
+        Observaciones = p_Observaciones,
+        ID_HomologacionNominal = p_ID_HomologacionNominal
+    WHERE ID_SeguimientoNominal = p_ID_SeguimientoNominal;
+END$$
+
+CREATE PROCEDURE sp_delete_Seguimiento_Nominal(IN p_ID_SeguimientoNominal VARCHAR(10))
+BEGIN
+    DELETE FROM Seguimiento_Nominal WHERE ID_SeguimientoNominal = p_ID_SeguimientoNominal;
+END$$
+
+
+-- ============================================
+-- INFORMACION_INFANTE
+-- ============================================
+CREATE PROCEDURE sp_insert_Informacion_Infante(
+    IN p_DNI_Infante VARCHAR(8),
+    IN p_ID_SeguimientoNominal VARCHAR(10),
+    IN p_Nombres_Infante VARCHAR(60),
+    IN p_Apellidos_Infante VARCHAR(60),
+    IN p_FechaNacimiento DATE,
+    IN p_CRED TINYINT,
+    IN p_Vacunas TINYINT,
+    IN p_Suplementacion TINYINT,
+    IN p_Dosaje_Hb TINYINT,
+    IN p_Anemia TINYINT,
+    IN p_Tratamiento_Anemia TINYINT,
+    IN p_PadronNominal_Actualizado TINYINT
+)
+BEGIN
+    INSERT INTO Informacion_Infante VALUES (
+        p_DNI_Infante, p_ID_SeguimientoNominal, p_Nombres_Infante,
+        p_Apellidos_Infante, p_FechaNacimiento, p_CRED, p_Vacunas,
+        p_Suplementacion, p_Dosaje_Hb, p_Anemia, p_Tratamiento_Anemia,
+        p_PadronNominal_Actualizado
+    );
+END$$
+
+CREATE PROCEDURE sp_update_Informacion_Infante(
+    IN p_DNI_Infante VARCHAR(8),
+    IN p_ID_SeguimientoNominal VARCHAR(10),
+    IN p_Nombres_Infante VARCHAR(60),
+    IN p_Apellidos_Infante VARCHAR(60),
+    IN p_FechaNacimiento DATE,
+    IN p_CRED TINYINT,
+    IN p_Vacunas TINYINT,
+    IN p_Suplementacion TINYINT,
+    IN p_Dosaje_Hb TINYINT,
+    IN p_Anemia TINYINT,
+    IN p_Tratamiento_Anemia TINYINT,
+    IN p_PadronNominal_Actualizado TINYINT
+)
+BEGIN
+    UPDATE Informacion_Infante SET
+        Nombres_Infante = p_Nombres_Infante,
+        Apellidos_Infante = p_Apellidos_Infante,
+        FechaNacimiento = p_FechaNacimiento,
+        CRED = p_CRED,
+        Vacunas = p_Vacunas,
+        Suplementacion = p_Suplementacion,
+        Dosaje_Hb = p_Dosaje_Hb,
+        Anemia = p_Anemia,
+        Tratamiento_Anemia = p_Tratamiento_Anemia,
+        PadronNominal_Actualizado = p_PadronNominal_Actualizado
+    WHERE DNI_Infante = p_DNI_Infante AND ID_SeguimientoNominal = p_ID_SeguimientoNominal;
+END$$
+
+CREATE PROCEDURE sp_delete_Informacion_Infante(
+    IN p_DNI_Infante VARCHAR(8),
+    IN p_ID_SeguimientoNominal VARCHAR(10)
+)
+BEGIN
+    DELETE FROM Informacion_Infante 
+    WHERE DNI_Infante = p_DNI_Infante AND ID_SeguimientoNominal = p_ID_SeguimientoNominal;
+END$$
+
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE sp_count_children_by_district(IN distrito VARCHAR(50))
+BEGIN
+    SELECT COUNT(*) AS Cantidad
+    FROM Infante i
+    JOIN Ficha_Visita f 
+        ON i.DNI_CE = f.DNI_CE 
+       AND i.Codigo_PadronNominal = f.Codigo_PadronNominal
+    WHERE f.Distrito = distrito;
+END //
+DELIMITER ;
+
+DELIMITER $$
+
+
+-- ================================
+-- LISTAR Infantes
+-- ================================
+-- Listar todos los infantes (para usar en UI)
+CREATE PROCEDURE sp_list_Infante()
+BEGIN
+    SELECT DNI_CE, Codigo_PadronNominal, Nombre_Infante, Apellido_Paterno, Apellido_Materno, FechaNacimiento_Infante, Codigo_Sexo
+    FROM Infante;
+END$$
+
+-- Obtener un infante por PK (DNI_CE, Codigo_PadronNominal)
+CREATE PROCEDURE sp_get_Infante(
+    IN p_DNI_CE VARCHAR(8),
+    IN p_Codigo_PadronNominal VARCHAR(8)
+)
+BEGIN
+    SELECT DNI_CE, Codigo_PadronNominal, Nombre_Infante, Apellido_Paterno, Apellido_Materno, FechaNacimiento_Infante, Codigo_Sexo
+    FROM Infante
+    WHERE DNI_CE = p_DNI_CE AND Codigo_PadronNominal = p_Codigo_PadronNominal;
+END$$
+
+DELIMITER ;
+
+
+-- ================================
+-- LISTAR Homlogacion Nominal
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Homologacion_Nominal()
+BEGIN
+    SELECT * FROM Homologacion_Nominal;
+END$$
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Homologacion_Nominal(IN p_ID VARCHAR(10))
+BEGIN
+    SELECT * 
+    FROM Homologacion_Nominal 
+    WHERE ID_HomologacionNominal = p_ID;
+END$$
+DELIMITER ;
+
+-- ================================
+-- LISTAR Padron_Nominal
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Padron_Nominal()
+BEGIN
+    SELECT * FROM Padron_Nominal;
+END$$
+DELIMITER ;
+
+-- ================================
+-- GET by PK Padron_Nominal
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_get_Padron_Nominal(IN p_codigo VARCHAR(8))
+BEGIN
+    SELECT * 
+    FROM Padron_Nominal
+    WHERE Codigo_PadronNominal = p_codigo;
+END$$
+DELIMITER ;
+
+-- ================================
+-- LISTAR Homologacion_Nominal
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Homologacion_Nominal()
+BEGIN
+    SELECT * FROM Homologacion_Nominal;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Homologacion_Nominal(IN p_id VARCHAR(10))
+BEGIN
+    SELECT *
+    FROM Homologacion_Nominal
+    WHERE ID_HomologacionNominal = p_id;
+END$$
+DELIMITER ;
+
+-- ================================
+-- LISTAR Ficha_Visita
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Ficha_Visita()
+BEGIN
+    SELECT * FROM Ficha_Visita;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Ficha_Visita(IN p_id INT)
+BEGIN
+    SELECT *
+    FROM Ficha_Visita
+    WHERE ID_Visita = p_id;
+END$$
+DELIMITER ;
+
+
+-- ================================
+-- LISTAR Apoderado
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Apoderado()
+BEGIN
+    SELECT * FROM Apoderado;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Apoderado(IN p_dni VARCHAR(8), IN p_dni_ce VARCHAR(8))
+BEGIN
+    SELECT *
+    FROM Apoderado
+    WHERE DNI_Apoderado = p_dni
+      AND DNI_CE = p_dni_ce;
+END$$
+DELIMITER ;
+
+
+-- ================================
+-- LISTAR Representante de Salud
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Representante_Salud()
+BEGIN
+    SELECT * FROM Representante_Salud;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Representante_Salud(IN p_dni VARCHAR(8), IN p_id VARCHAR(10))
+BEGIN
+    SELECT *
+    FROM Representante_Salud
+    WHERE DNI_RS = p_dni
+      AND ID_HomologacionNominal = p_id;
+END$$
+DELIMITER ;
+
+
+-- ================================
+-- LISTAR Representante Municipal
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Representante_Municipal()
+BEGIN
+    SELECT * FROM Representante_Municipal;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Representante_Municipal(IN p_dni VARCHAR(8), IN p_id VARCHAR(10))
+BEGIN
+    SELECT *
+    FROM Representante_Municipal
+    WHERE DNI_RM = p_dni
+      AND ID_HomologacionNominal = p_id;
+END$$
+DELIMITER ;
+
+
+-- ================================
+-- LISTAR Seguimiento Nominal
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Seguimiento_Nominal()
+BEGIN
+    SELECT * FROM Seguimiento_Nominal;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Seguimiento_Nominal(IN p_id VARCHAR(10))
+BEGIN
+    SELECT *
+    FROM Seguimiento_Nominal
+    WHERE ID_SeguimientoNominal = p_id;
+END$$
+DELIMITER ;
+
+
+-- ================================
+-- LISTAR Informacion Infante
+-- ================================
+DELIMITER $$
+CREATE PROCEDURE sp_list_Informacion_Infante()
+BEGIN
+    SELECT * FROM Informacion_Infante;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_get_Informacion_Infante(IN p_dni VARCHAR(8), IN p_id VARCHAR(10))
+BEGIN
+    SELECT *
+    FROM Informacion_Infante
+    WHERE DNI_Infante = p_dni
+      AND ID_SeguimientoNominal = p_id;
+END$$
+DELIMITER ;
+
+
+
+-- ================================
+-- REPORTES Y CONSULTAS
+-- ================================
+
+-- Mostrar todos los infantes registrados
+DROP PROCEDURE IF EXISTS sp_mostrar_infantes;
+DELIMITER $$
+CREATE PROCEDURE sp_mostrar_infantes()
+BEGIN
+    SELECT * FROM Infante;
+END$$
+DELIMITER ;
+
+-- Nombres y fechas de visita de cada infante
+DROP PROCEDURE IF EXISTS sp_infantes_visitas;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_visitas()
+BEGIN
+    SELECT Nombre_Infante, Fecha_Visita 
+    FROM Infante 
+    JOIN Ficha_Visita USING (DNI_CE);
+END$$
+DELIMITER ;
+
+-- Infantes nacidos en 2024
+DROP PROCEDURE IF EXISTS sp_infantes_nacidos_2024;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_nacidos_2024()
+BEGIN
+    SELECT * 
+    FROM Infante 
+    WHERE YEAR(FechaNacimiento_Infante) = 2024;
+END$$
+DELIMITER ;
+
+-- Apoderados con grado de instrucción ‘Superior’
+DROP PROCEDURE IF EXISTS sp_apoderados_superior;
+DELIMITER $$
+CREATE PROCEDURE sp_apoderados_superior()
+BEGIN
+    SELECT * 
+    FROM Apoderado 
+    WHERE GradoInstruccion_Madre = 'Superior';
+END$$
+DELIMITER ;
+
+-- Promedio de peso de los infantes
+DROP PROCEDURE IF EXISTS sp_promedio_peso;
+DELIMITER $$
+CREATE PROCEDURE sp_promedio_peso()
+BEGIN
+    SELECT AVG(Peso_Infante) AS Promedio_Peso 
+    FROM Ficha_Visita;
+END$$
+DELIMITER ;
+
+-- Infantes y su distrito de visita
+DROP PROCEDURE IF EXISTS sp_infantes_distrito;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_distrito()
+BEGIN
+    SELECT i.Nombre_Infante, f.Distrito 
+    FROM Infante i 
+    JOIN Ficha_Visita f ON i.DNI_CE = f.DNI_CE;
+END$$
+DELIMITER ;
+
+-- Relación de apoderados e infantes
+DROP PROCEDURE IF EXISTS sp_apoderados_infantes;
+DELIMITER $$
+CREATE PROCEDURE sp_apoderados_infantes()
+BEGIN
+    SELECT a.Nombres_Apoderado, i.Nombre_Infante 
+    FROM Apoderado a 
+    JOIN Infante i ON a.DNI_CE = i.DNI_CE;
+END$$
+DELIMITER ;
+
+-- Contar infantes por distrito
+DROP PROCEDURE IF EXISTS sp_contar_infantes_distrito;
+DELIMITER $$
+CREATE PROCEDURE sp_contar_infantes_distrito()
+BEGIN
+    SELECT Distrito, COUNT(*) AS Cantidad 
+    FROM Ficha_Visita 
+    GROUP BY Distrito;
+END$$
+DELIMITER ;
+
+-- Infantes con anemia
+DROP PROCEDURE IF EXISTS sp_infantes_anemia;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_anemia()
+BEGIN
+    SELECT Nombres_Infante, Anemia 
+    FROM Informacion_Infante 
+    WHERE Anemia = 1;
+END$$
+DELIMITER ;
+
+-- Infantes con su establecimiento de salud
+DROP PROCEDURE IF EXISTS sp_infantes_establecimiento;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_establecimiento()
+BEGIN
+    SELECT i.Nombre_Infante, s.EstablecimientoSalud
+    FROM Informacion_Infante info
+    JOIN Seguimiento_Nominal s ON info.ID_SeguimientoNominal = s.ID_SeguimientoNominal
+    JOIN Infante i ON info.DNI_Infante = i.DNI_CE;
+END$$
+DELIMITER ;
+
+-- Infantes con su establecimiento de salud
+DROP PROCEDURE IF EXISTS sp_infantes_establecimiento;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_establecimiento()
+BEGIN
+    SELECT i.Nombre_Infante, s.EstablecimientoSalud
+    FROM Informacion_Infante info
+    JOIN Seguimiento_Nominal s ON info.ID_SeguimientoNominal = s.ID_SeguimientoNominal
+    JOIN Infante i ON info.DNI_Infante = i.DNI_CE;
+END$$
+DELIMITER ;
+
+-- Total infantes con CRED completo
+DROP PROCEDURE IF EXISTS sp_total_cred;
+DELIMITER $$
+CREATE PROCEDURE sp_total_cred()
+BEGIN
+    SELECT COUNT(*) AS Total_CRED_Completo 
+    FROM Informacion_Infante 
+    WHERE CRED = 1;
+END$$
+DELIMITER ;
+
+-- Total de infantes por establecimiento de salud
+DROP PROCEDURE IF EXISTS sp_infantes_por_establecimiento;
+DELIMITER $$
+CREATE PROCEDURE sp_infantes_por_establecimiento()
+BEGIN
+    SELECT s.EstablecimientoSalud, COUNT(i.DNI_Infante) AS Total
+    FROM Informacion_Infante i
+    JOIN Seguimiento_Nominal s ON i.ID_SeguimientoNominal = s.ID_SeguimientoNominal
+    GROUP BY s.EstablecimientoSalud;
+END$$
+DELIMITER ;
